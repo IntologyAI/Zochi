@@ -808,6 +808,17 @@ def llmclient_generate_conversation(self, messages: List[Dict[str, str]], max_to
         conversation_text += "Assistant:"
         response = self.generate(conversation_text, max_tokens=max_tokens, temperature=temperature)
         return response.strip()
+
+    elif self.client_type == "ollama":
+        url = f"{self.base_url}/api/chat"
+        data = {"model": self.model_name, "messages": messages, "stream": False, "temperature": temperature, "num_predict": max_tokens}
+        response = self.session.post(url, json=data)
+        response.raise_for_status()
+        res_json = response.json()
+        if isinstance(res_json, dict):
+            message = res_json.get("message") or {}
+            return message.get("content", res_json.get("response", "")).strip()
+        return ""
     else:
         raise ValueError(f"Client type {self.client_type} does not support conversation format.")
 

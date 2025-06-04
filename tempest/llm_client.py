@@ -11,7 +11,14 @@ class LLMClient:
         self.model_name = model_name
         
         # Set up API clients based on model type
-        if "mistralai" in model_name or "together" in model_name or "deepseek" in model_name or "meta" in model_name:
+        if model_name.startswith("local/") or model_name.startswith("ollama/"):
+            # Models served by a local Ollama instance
+            self.model_name = model_name.split("/", 1)[1]
+            self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            self.client_type = "ollama"
+            self.session = requests.Session()
+
+        elif "mistralai" in model_name or "together" in model_name or "deepseek" in model_name or "meta" in model_name:
             self.api_key = os.getenv("TOGETHER_API_KEY")
             if not self.api_key:
                 raise ValueError("TOGETHER_API_KEY environment variable is not set")
@@ -80,7 +87,31 @@ class LLMClient:
                     return text
                 else:
                     raise e
-            
+
+        elif self.client_type == "ollama":
+            url = f"{self.base_url}/api/generate"
+            data = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "temperature": temperature,
+                "top_p": top_p,
+                "stream": False,
+                "num_predict": max_tokens,
+            }
+            try:
+                response = self.session.post(url, json=data)
+                response.raise_for_status()
+                return response.json().get("response", "")
+            except Exception as e:
+                if retry_on_error:
+                    time.sleep(2)
+                    data["temperature"] = max(0.1, temperature - 0.3)
+                    response = self.session.post(url, json=data)
+                    response.raise_for_status()
+                    return response.json().get("response", "")
+                else:
+                    raise e
+
         elif self.client_type == "openai":
             response = self.client.chat.completions.create(
                 model=self.model_name,
@@ -133,3 +164,20 @@ class LLMClient:
                 temperature=temperature
             )
             return response.choices[0].message.content
+
+        elif self.client_type == "ollama":
+            url = f"{self.base_url}/api/chat"
+            data = {
+                "model": self.model_name,
+                "messages": messages,
+                "stream": False,
+                "temperature": temperature,
+                "num_predict": max_tokens,
+            }
+            response = self.session.post(url, json=data)
+            response.raise_for_status()
+            res_json = response.json()
+            if isinstance(res_json, dict):
+                message = res_json.get("message") or {}
+                return message.get("content", res_json.get("response", "")).strip()
+            return ""
