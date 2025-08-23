@@ -15,6 +15,12 @@
   <br>
 </div>
 
+Project Lead: 
+[Andy Zhou](https://www.andyzhou.ai/) 
+
+Core Contributors: 
+Ron Arel, Soren Dunn, Nikhil Khandekar
+
 ## 1. Introduction
 
 *Updated May 27, 2025: The technical report and code cover an earlier version of Zochi. Zochi’s capabilities have greatly expanded, culminating in acceptance to ACL 2025!*
