@@ -19,7 +19,7 @@ Project Lead:
 [Andy Zhou](https://www.andyzhou.ai/) 
 
 Core Contributors: 
-Ron Arel, Soren Dunn, Nikhil Khandekar
+[Ron Arel](https://arel.ai/), Soren Dunn, Nikhil Khandekar
 
 ## 1. Introduction
 
